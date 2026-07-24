@@ -8,8 +8,13 @@ on:
 
 jobs:
   build:
-    # Windows, because the pom resolves the JavaFX `win` platform classifier by default.
-    runs-on: windows-latest
+    # The pom picks the JavaFX platform classifier from the building machine, so each OS here
+    # produces a jar for itself. Building all three is what keeps the cross-platform claim honest.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -22,14 +27,22 @@ jobs:
       - name: Build fat jar
         run: mvn -B clean package
 
+      # Rendering the contact sheet doubles as a smoke test: it exercises every renderer in every
+      # pose, and JavaFX needs a working graphics pipeline to snapshot a canvas at all.
       - name: Render the pose contact sheet
-        # Doubles as a smoke test: it exercises every renderer in every pose, and JavaFX needs a
-        # working graphics pipeline to snapshot a canvas at all.
+        if: matrix.os != 'ubuntu-latest'
         run: java -cp target/desktop-pets.jar dev.gauravs.desktoppets.devtools.PreviewMain preview.png
+
+      - name: Render the pose contact sheet (headless via Xvfb)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run -a java -cp target/desktop-pets.jar dev.gauravs.desktoppets.devtools.PreviewMain preview.png
 
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-pets
+          name: desktop-pets-${{ matrix.os }}
           path: |
             target/desktop-pets.jar
             preview.png

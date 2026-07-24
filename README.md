@@ -1,8 +1,10 @@
 # Desktop Pets
 
-Chubby little puppies that live on your Windows desktop. They wander along the bottom of your
-screen, sit, scratch an ear, doze off, and can be picked up and thrown. Built from scratch on
-JavaFX — no game engine, no sprite assets, no third-party libraries beyond JavaFX itself.
+Chubby little puppies that live on your desktop. They wander along the bottom of your screen, sit,
+scratch an ear, doze off, and can be picked up and thrown. Built from scratch on JavaFX — no game
+engine, no sprite assets, no third-party libraries beyond JavaFX itself.
+
+Runs on **Windows, macOS, and Linux**; all three are built on every push.
 
 Puppies are the default. A cat is also included, and you can switch any pet between the two from
 its right-click menu.
@@ -19,13 +21,19 @@ Three ways in, depending on how much you want on your machine. **Nothing needs J
 it resolves as ordinary Maven dependencies with the `win` classifier and is shaded into the jar, so
 there is no `--module-path` incantation to remember.
 
-### 1. Download and run — nothing to install
+### 1. Download and run — nothing to install (Windows)
 
 Grab `DesktopPets-windows.zip` from the [latest release](https://github.com/gauravs19/desktop-pets/releases/latest),
 unzip it anywhere, and double-click `DesktopPets.exe`. It bundles its own trimmed Java runtime, so no
 JDK, no Maven, and no JavaFX are required.
 
+Release binaries are Windows-only for now, because JavaFX and `jpackage` both produce
+platform-specific output and the release is cut from a Windows machine. On macOS and Linux, use
+option 2 — it takes about a minute and produces the same thing for your platform.
+
 ### 2. From source, prerequisites installed for you
+
+**Windows**
 
 ```powershell
 git clone https://github.com/gauravs19/desktop-pets.git
@@ -35,35 +43,56 @@ cd desktop-pets
 
 `setup.ps1` checks for JDK 21+ and Maven, installs whichever is missing via `winget`
 (`Microsoft.OpenJDK.21` and `Apache.Maven` — it names them before installing and skips anything
-already present), then builds and launches. If winget had to install something, the script will tell
-you to reopen your terminal so the new `PATH` is picked up, then re-run it.
+already present), then builds and launches.
 
-### 3. From source, you already have a JDK and Maven
+**macOS / Linux**
 
-```powershell
-.\run.ps1            # build if needed, then launch via javaw (no console window)
-.\run.ps1 -Rebuild   # force a rebuild first
+```bash
+git clone https://github.com/gauravs19/desktop-pets.git
+cd desktop-pets
+./setup.sh
 ```
 
-Or by hand:
+`setup.sh` does the same job using whichever package manager it finds — `brew`, `apt-get`, `dnf`, or
+`pacman`.
+
+Either script may need you to reopen your terminal afterwards so the new `PATH` is picked up, then
+re-run it. On macOS in particular, Homebrew's `openjdk@21` is keg-only, and the script prints the
+`PATH` line to add.
+
+### 3. From source, you already have a JDK 21+ and Maven
 
 ```powershell
+.\run.ps1            # Windows: build if needed, launch via javaw (no console window)
+.\run.ps1 -Rebuild
+```
+
+```bash
+./run.sh             # macOS / Linux: build if needed, launch detached
+./run.sh --rebuild
+```
+
+Or by hand, on any platform:
+
+```bash
 mvn clean package
-java -jar target\desktop-pets.jar
+java -jar target/desktop-pets.jar
 ```
 
-Requires JDK 21+ and Maven 3.9+.
-
-### Building the standalone exe yourself
+### Building the standalone app yourself
 
 ```powershell
-.\package.ps1        # -> dist\DesktopPets\DesktopPets.exe
-.\package.ps1 -Zip   # also -> dist\DesktopPets-windows.zip
+.\package.ps1 -Zip   # Windows -> dist\DesktopPets\DesktopPets.exe (+ zip)
 ```
 
-This uses `jpackage`, which ships with JDK 21, so there is nothing extra to install. It produces a
-`--type app-image` rather than an `msi` or `exe` installer on purpose: those installer types
-additionally require WiX.
+```bash
+./package.sh --zip   # macOS -> dist/DesktopPets.app, Linux -> dist/DesktopPets/ (+ zip)
+```
+
+Both use `jpackage`, which ships with JDK 21, so there is nothing extra to install. They produce
+`--type app-image` rather than an installer (`msi`, `dmg`, `pkg`, `deb`, `rpm`) on purpose: every
+installer type needs extra tooling on the build machine — WiX on Windows, for instance — and an app
+image is enough to run.
 
 ## What you can do with a pet
 
@@ -207,8 +236,22 @@ These are deliberate scope boundaries, not bugs:
 - **No system tray icon.** Adding one means mixing AWT's `SystemTray` into a JavaFX app, which
   brings its own threading caveats. Instead, the last pet can't be sent home, so there's always a
   pet to right-click for the menu.
-- **Windows-targeted.** The code itself is platform-neutral; only the `javafx.platform` property in
-  `pom.xml` is set to `win`. Change it to `linux` or `mac` to build elsewhere.
+
+## Platform notes
+
+The simulation code is platform-neutral — `Screens` works in JavaFX "visual bounds", which already
+excludes the Windows taskbar, the macOS Dock and menu bar, and Linux panels, so a pet lands on the
+right floor everywhere without special cases. The platform-specific parts are these:
+
+- **The build picks its own JavaFX classifier.** Maven OS profiles in `pom.xml` select `win`, `mac`,
+  `mac-aarch64`, `linux`, or `linux-aarch64`. The consequence: the shaded jar runs on the platform it
+  was built on, not everywhere. Cross-build with `-Djavafx.platform=linux` if you need to.
+- **Linux needs a compositing window manager** for the transparent windows to actually be
+  transparent. Under GNOME, KDE, or any compositor this is the default; on a bare WM without
+  compositing you may see an opaque rectangle behind each pet.
+- **macOS** shows one Dock entry for the app. Transparent always-on-top windows behave as expected;
+  the pets float above other windows and sit on the Dock's upper edge.
+- **Windows** is the most tested platform, and the only one with prebuilt release binaries.
 
 ## Ideas worth building next
 

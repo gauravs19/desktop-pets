@@ -15,10 +15,46 @@
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>21.0.5</javafx.version>
-    <!-- Platform classifier: win | linux | mac | mac-aarch64 -->
+    <!--
+      Fallback JavaFX platform classifier, used only if none of the OS profiles below matches.
+      Override explicitly with -Djavafx.platform=linux to cross-build for another platform.
+    -->
     <javafx.platform>win</javafx.platform>
     <main.class>dev.gauravs.desktoppets.Launcher</main.class>
   </properties>
+
+  <!--
+    JavaFX artifacts are platform-specific, so the classifier is chosen from the building machine's
+    OS and CPU. A consequence worth knowing: the shaded jar this produces runs on the platform it was
+    built on, not everywhere. That is the price of bundling JavaFX so users need no separate install.
+  -->
+  <profiles>
+    <profile>
+      <id>platform-windows</id>
+      <activation><os><family>windows</family></os></activation>
+      <properties><javafx.platform>win</javafx.platform></properties>
+    </profile>
+    <profile>
+      <id>platform-mac-intel</id>
+      <activation><os><family>mac</family><arch>x86_64</arch></os></activation>
+      <properties><javafx.platform>mac</javafx.platform></properties>
+    </profile>
+    <profile>
+      <id>platform-mac-apple-silicon</id>
+      <activation><os><family>mac</family><arch>aarch64</arch></os></activation>
+      <properties><javafx.platform>mac-aarch64</javafx.platform></properties>
+    </profile>
+    <profile>
+      <id>platform-linux-x86</id>
+      <activation><os><name>linux</name><arch>amd64</arch></os></activation>
+      <properties><javafx.platform>linux</javafx.platform></properties>
+    </profile>
+    <profile>
+      <id>platform-linux-arm</id>
+      <activation><os><name>linux</name><arch>aarch64</arch></os></activation>
+      <properties><javafx.platform>linux-aarch64</javafx.platform></properties>
+    </profile>
+  </profiles>
 
   <dependencies>
     <dependency>
