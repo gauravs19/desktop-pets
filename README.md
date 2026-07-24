@@ -13,24 +13,57 @@ its right-click menu.
 
 *Every pose of every species, rendered straight out of the code by the preview harness below.*
 
-## Quick start
+## Install
+
+Three ways in, depending on how much you want on your machine. **Nothing needs JavaFX installed** —
+it resolves as ordinary Maven dependencies with the `win` classifier and is shaded into the jar, so
+there is no `--module-path` incantation to remember.
+
+### 1. Download and run — nothing to install
+
+Grab `DesktopPets-windows.zip` from the [latest release](https://github.com/gauravs19/desktop-pets/releases/latest),
+unzip it anywhere, and double-click `DesktopPets.exe`. It bundles its own trimmed Java runtime, so no
+JDK, no Maven, and no JavaFX are required.
+
+### 2. From source, prerequisites installed for you
 
 ```powershell
-# from the project root
-.\run.ps1
+git clone https://github.com/gauravs19/desktop-pets.git
+cd desktop-pets
+.\setup.ps1
 ```
 
-That builds a fat jar and launches it with `javaw` so no console window sticks around. If you'd
-rather do it by hand:
+`setup.ps1` checks for JDK 21+ and Maven, installs whichever is missing via `winget`
+(`Microsoft.OpenJDK.21` and `Apache.Maven` — it names them before installing and skips anything
+already present), then builds and launches. If winget had to install something, the script will tell
+you to reopen your terminal so the new `PATH` is picked up, then re-run it.
+
+### 3. From source, you already have a JDK and Maven
+
+```powershell
+.\run.ps1            # build if needed, then launch via javaw (no console window)
+.\run.ps1 -Rebuild   # force a rebuild first
+```
+
+Or by hand:
 
 ```powershell
 mvn clean package
 java -jar target\desktop-pets.jar
 ```
 
-Requires JDK 21+ and Maven. The JavaFX jars are pulled in as normal Maven dependencies with the
-`win` classifier and shaded into the output jar, so there's nothing to install separately and no
-`--module-path` incantation to remember.
+Requires JDK 21+ and Maven 3.9+.
+
+### Building the standalone exe yourself
+
+```powershell
+.\package.ps1        # -> dist\DesktopPets\DesktopPets.exe
+.\package.ps1 -Zip   # also -> dist\DesktopPets-windows.zip
+```
+
+This uses `jpackage`, which ships with JDK 21, so there is nothing extra to install. It produces a
+`--type app-image` rather than an `msi` or `exe` installer on purpose: those installer types
+additionally require WiX.
 
 ## What you can do with a pet
 
@@ -130,6 +163,9 @@ Two conventions do a lot of work here and are worth knowing before reading the c
 | `Palette.java` | Six colour schemes, cycled as pets are added. |
 | `Config.java` | Properties file at `~/.desktop-pets/config.properties`. |
 | `devtools/RenderPreview.java` | Dev-only: renders every species in every pose to a contact-sheet PNG. |
+
+Scripts: `setup.ps1` (install prerequisites, build, run), `run.ps1` (build if needed, run),
+`package.ps1` (self-contained exe via jpackage).
 
 ### Reviewing the art
 

@@ -1,4 +1,5 @@
 target/
+dist/
 *.class
 
 # Contact sheets rendered ad hoc at the repo root. The committed one lives in docs/.
