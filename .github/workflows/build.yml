@@ -1,0 +1,35 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Windows, because the pom resolves the JavaFX `win` platform classifier by default.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build fat jar
+        run: mvn -B clean package
+
+      - name: Render the pose contact sheet
+        # Doubles as a smoke test: it exercises every renderer in every pose, and JavaFX needs a
+        # working graphics pipeline to snapshot a canvas at all.
+        run: java -cp target/desktop-pets.jar dev.gauravs.desktoppets.devtools.PreviewMain preview.png
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-pets
+          path: |
+            target/desktop-pets.jar
+            preview.png

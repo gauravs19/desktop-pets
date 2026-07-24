@@ -1,0 +1,11 @@
+target/
+*.class
+
+# Contact sheets rendered ad hoc at the repo root. The committed one lives in docs/.
+/preview*.png
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
